@@ -1,6 +1,7 @@
 package top.dreamcenter.spider;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -182,7 +183,21 @@ public class App {
         }
 
         // 查找标题
-        WebElement titleEl = driver.findElement(By.id("activity-name"));
+        boolean isImgDoc = false;
+        // 类别1，普通文档流
+
+        WebElement titleEl;
+
+        try {
+            titleEl = driver.findElement(By.id("activity-name"));
+        } catch (NoSuchElementException e) {
+            titleEl = driver.findElement(By.className("rich_media_title"));
+            isImgDoc = true;
+        }
+
+        // 类别2，图片流
+
+//        titleEl = driver.findElement(By.id("activity-name"));
         String title = titleEl.getText();
 
         System.out.println(title);
@@ -194,17 +209,36 @@ public class App {
         }
 
         // 获取图片资源
-        List<WebElement> img = driver.findElements(By.tagName("img"));
         int total = 0;
         List<String> links = new ArrayList<>();
-        for (WebElement item : img) {
-            String result = item.getAttribute("data-src");
 
-            if (result != null) {
-                total++;
-                links.add(result);
+        // 类别1，普通文档流
+        if (!isImgDoc) {
+            List<WebElement> img = driver.findElements(By.tagName("img"));
+            for (WebElement item : img) {
+                String result = item.getAttribute("data-src");
+
+                if (result != null) {
+                    total++;
+                    links.add(result);
+                }
             }
         }
+
+        // 类别2，图片阅览流
+        else {
+            List<WebElement> img = driver.findElements(By.cssSelector(".swiper_item_img>img"));
+            for (WebElement item : img) {
+                String result = item.getAttribute("src");
+
+                if (result != null) {
+                    total++;
+                    links.add(result);
+                }
+            }
+        }
+
+
         append("▷ 找到图片:" + total +" 张");
 
         driver.quit();
